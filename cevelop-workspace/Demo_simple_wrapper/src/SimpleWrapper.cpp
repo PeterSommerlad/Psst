@@ -34,10 +34,10 @@ void testConsumption40over500(){
 void testConsumption40over500Wrong(){
 	literGas const l { 40 };
 	kmDriven const km { 500 };
-	ASSERT_EQUAL(8.0,consumption(km,l).consumption); // no compile
+//	ASSERT_EQUAL(8.0,consumption(km,l).consumption); // no compile
 }
 void testConsumptionEvenMoreStrange(){
-//	ASSERT_EQUAL(8.0,consumption(consumption({40},{500}),{100}));
+//	ASSERT_EQUAL(8.0,consumption(consumption({40},{500}),{100})); // no compile
 }
 
 

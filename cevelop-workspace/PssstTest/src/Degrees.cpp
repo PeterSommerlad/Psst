@@ -27,11 +27,11 @@ struct Celsius:create_vector_space<Celsius,degrees,CelsiusZero>
 static_assert(sizeof(degrees)==sizeof(Celsius));
 
 constexpr Celsius fromKelvin(Kelvin k)noexcept{
-	return {(k.offset-(Celsius::origin - Kelvin::origin)).val};
+	return {(k.val-(Celsius::origin - Kelvin::origin)).val};
 }
 
 constexpr Kelvin fromCelsius(Celsius c)noexcept{
-	return {(c.offset-(Kelvin::origin-Celsius::origin)).val};
+	return {(c.val-(Kelvin::origin-Celsius::origin)).val};
 }
 
 

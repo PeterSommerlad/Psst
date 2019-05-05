@@ -19,6 +19,8 @@
 #include <cstddef>
 #include "Degrees.h"
 #include "Consumption.h"
+#include "StrongWithEncapsulation.h"
+#include "StrongWithConstructor.h"
 
 using namespace Pssst;
 struct Int: strong<int,Int>,ops<Int,Order,Inc,Add,Eq,Out>{
@@ -163,6 +165,10 @@ success &= runner(ArraySizeDiffStrong, "ArraySizeDiffStrong");
 	success &= runner(Degrees, "Degrees");
 	cute::suite Consumption = make_suite_Consumption();
 	success &= runner(Consumption, "Consumption");
+	cute::suite StrongWithEncapsulation = make_suite_StrongWithEncapsulation();
+	success &= runner(StrongWithEncapsulation, "StrongWithEncapsulation");
+	cute::suite StrongWithConstructor = make_suite_StrongWithConstructor();
+	success &= runner(StrongWithConstructor, "make_suite_StrongWithConstructor");
 	return success;
 }
 

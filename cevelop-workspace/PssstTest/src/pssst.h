@@ -340,12 +340,12 @@ struct create_vector_space {
 	using vector_space=ME;
 	static_assert(std::is_same_v<affine_space,decltype(ZEROFUNC{}())>, "origin must be in domain affine");
 	static inline constexpr affine_space origin=ZEROFUNC{}();
-	affine_space offset;
+	affine_space val;
 	// linear
 	// vs + as
 	friend constexpr vector_space&
 	operator+=(vector_space& l, affine_space const &r) noexcept {
-		l.offset += r;
+		l.val += r;
 		return l;
 	}
 	friend constexpr vector_space
@@ -359,7 +359,7 @@ struct create_vector_space {
 	// vs - as // caution check if before origin is allowed overflow check
 	friend constexpr vector_space&
 	operator-=(vector_space& l, affine_space const &r) noexcept {
-		l.offset -= r;
+		l.val -= r;
 		return l;
 	}
 	friend constexpr vector_space
@@ -369,7 +369,7 @@ struct create_vector_space {
 	// vs - vs = as
 	friend constexpr affine_space
 	operator-(vector_space const &l,vector_space const &r){
-		return l.offset - r.offset;
+		return l.val - r.val;
 	}
 	// vs + vs, vs * scalar // iff origin == zero and opt-in, not yet.
 };
@@ -379,7 +379,7 @@ constexpr TO convertTo(FROM from) noexcept{
 	static_assert(std::is_same_v<
 			typename FROM::affine_space
 			,typename TO::affine_space>);
-	return {(from.offset-(TO::origin-FROM::origin))};
+	return {(from.val-(TO::origin-FROM::origin))};
 }
 
 
@@ -391,7 +391,7 @@ static_assert(!is_absolute_v<bla>,"bla is absolute?");
 struct blu:create_vector_space<blu,bla>{};
 static_assert(is_absolute_v<blu>,"blu should be absolute");
 static_assert(blu::origin==blu::affine_space{0},"blu origin is zero");
-static_assert(blu{42}.offset==bla{42}, "rel accessible");
+static_assert(blu{42}.val==bla{42}, "rel accessible");
 static_assert(std::is_same_v<int,underlying_value_type<bla>>,"..");
 
 struct dummy{int i;};
