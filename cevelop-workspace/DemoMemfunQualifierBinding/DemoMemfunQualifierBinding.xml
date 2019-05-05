@@ -1,0 +1,17 @@
+<testsuites>
+	<testsuite name="AllTests" tests="9">
+		<testcase classname="AllTests" name="DemoOldConstOnConstLValue"/>
+		<testcase classname="AllTests" name="DemoOldTemporary"/>
+		<testcase classname="AllTests" name="DemoOldLValue"/>
+		<testcase classname="AllTests" name="DemoModernConstOnConstLvalue"/>
+		<testcase classname="AllTests" name="DemoModernLValue"/>
+		<testcase classname="AllTests" name="DemoModernTemoporary"/>
+		<testcase classname="AllTests" name="DemoOverloadConstLValue"/>
+		<testcase classname="AllTests" name="DemoOverloadTemporary">
+			<failure message="../src/Test.cpp:102 DemoOverloadTemporary: -42 == static_cast&lt;OverloadAmbiguity const&amp;&amp;&gt;(OverloadAmbiguity{}).foo() expected:	-42	but was:	0	">
+DemoOverloadTemporary: -42 == static_cast&lt;OverloadAmbiguity const&amp;&amp;&gt;(OverloadAmbiguity{}).foo() expected:	-42	but was:	0	
+			</failure>
+		</testcase>
+		<testcase classname="AllTests" name="DemoOverloadLValue"/>
+	</testsuite>
+</testsuites>

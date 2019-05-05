@@ -1,0 +1,8 @@
+<testsuites>
+	<testsuite name="AllTests" tests="4">
+		<testcase classname="AllTests" name="testMakeAStack"/>
+		<testcase classname="AllTests" name="testPushOne"/>
+		<testcase classname="AllTests" name="testPushTopOne"/>
+		<testcase classname="AllTests" name="testPushPopEmpty"/>
+	</testsuite>
+</testsuites>

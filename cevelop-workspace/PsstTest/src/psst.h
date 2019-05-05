@@ -38,7 +38,6 @@ struct strong { // can not merge ops here, because of initializers required for 
 	}
 };
 
-
 //template <typename U>
 //struct is_strong{
 //	template<typename T>
