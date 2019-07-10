@@ -34,6 +34,11 @@ constexpr Kelvin fromCelsius(Celsius c)noexcept{
 	return {(c.val-(Kelvin::origin-Celsius::origin)).val};
 }
 
+struct otherdegrees:ops<otherdegrees,Eq,Order,Out>{
+	double d;
+};
+
+degrees x{{5},{},{}};
 
 void thisIsADegreesTest() {
 	degrees hotter{20};

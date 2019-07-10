@@ -21,6 +21,8 @@
 #include "Consumption.h"
 #include "StrongWithEncapsulation.h"
 #include "StrongWithConstructor.h"
+#include "SafeArithmetic.h"
+#include "StringOperations.h"
 
 using namespace Pssst;
 struct Int: strong<int,Int>,ops<Int,Order,Inc,Add,Eq,Out>{
@@ -49,10 +51,10 @@ void testBoolConverts(){
 
 
 
+	struct uptest:strong<int,uptest>,ops<uptest,UPlus>{};
 
 
 void testUPlus(){
-	struct uptest:strong<int,uptest>,ops<uptest,UPlus>{};
 	uptest one{1};
 	ASSERT_EQUAL(one.val,(+one).val);
 }
@@ -169,6 +171,10 @@ success &= runner(ArraySizeDiffStrong, "ArraySizeDiffStrong");
 	success &= runner(StrongWithEncapsulation, "StrongWithEncapsulation");
 	cute::suite StrongWithConstructor = make_suite_StrongWithConstructor();
 	success &= runner(StrongWithConstructor, "make_suite_StrongWithConstructor");
+	cute::suite SafeArithmetic = make_suite_SafeArithmetic();
+	success &= runner(SafeArithmetic, "SafeArithmetic");
+	cute::suite StringOperations = make_suite_StringOperations();
+	success &= runner(StringOperations, "StringOperations");
 	return success;
 }
 

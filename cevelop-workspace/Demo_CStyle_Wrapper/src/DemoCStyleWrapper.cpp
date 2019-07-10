@@ -8,7 +8,7 @@
 void testConsumption1over1(){
 	literGas const l {1} ;
 	kmDriven const km { 1 } ;
-	ASSERT_EQUAL(100.0,consumption(l,km).consumption);
+	ASSERT_EQUAL(10.0,consumption(l,km).consumption);
 }
 
 void testConsumption40over500(){
