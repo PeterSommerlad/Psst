@@ -2,11 +2,17 @@
 #include "cute.h"
 #include "pssst.h"
 
+#include <algorithm>
+
+#include <cstddef>
+#include <iterator>
+#include <stdexcept>
+
 namespace test {
 using namespace Pssst;
-struct Size: strong<size_t,Size>,ops<Size,Eq,Order,Additive,Out> {
+struct Size: strong<size_t,Size>,ops<Size,Order,Additive,Out> {
 };
-struct Diff: strong<std::ptrdiff_t,Diff>,ops<Diff,Eq,Order,Additive,Out>{};
+struct Diff: strong<std::ptrdiff_t,Diff>,ops<Diff,Order,Additive,Out>{};
 
 template <typename T, size_t N>
 struct array{

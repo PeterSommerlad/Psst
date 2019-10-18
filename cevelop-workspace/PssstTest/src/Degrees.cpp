@@ -12,7 +12,7 @@ static_assert(sizeof(double)==sizeof(degrees));
 
 
 struct Kelvin:create_vector_space<Kelvin,degrees>
-             ,ops<Kelvin,Eq,Order,Out>{};
+             ,ops<Kelvin,Order,Out>{};
 
 static_assert(sizeof(double)==sizeof(Kelvin));
 
@@ -23,18 +23,18 @@ struct CelsiusZero{
 };
 
 struct Celsius:create_vector_space<Celsius,degrees,CelsiusZero>
-              , ops<Celsius,Eq,Order,Out>{};
+              , ops<Celsius,Order,Out>{};
 static_assert(sizeof(degrees)==sizeof(Celsius));
 
 constexpr Celsius fromKelvin(Kelvin k)noexcept{
-	return {(k.val-(Celsius::origin - Kelvin::origin)).val};
+	return {(k.value-(Celsius::origin - Kelvin::origin)).value};
 }
 
 constexpr Kelvin fromCelsius(Celsius c)noexcept{
-	return {(c.val-(Kelvin::origin-Celsius::origin)).val};
+	return {(c.value-(Kelvin::origin-Celsius::origin)).value};
 }
 
-struct otherdegrees:ops<otherdegrees,Eq,Order,Out>{
+struct otherdegrees:ops<otherdegrees,Order,Out>{
 	double d;
 };
 

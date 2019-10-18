@@ -1,35 +1,26 @@
-#include "ArraySizeDiffStrong.h"
 #include "pssst.h"
-#include "cute.h"
-#include "ide_listener.h"
-#include "xml_listener.h"
-#include "cute_runner.h"
-#include <string>
-
-#include <stdexcept>
-
-#include <algorithm>
-
-#include <iterator>
-
-#include <sstream>
-
-#include <utility>
-
-#include <cstddef>
+#include "ArraySizeDiffStrong.h"
 #include "Degrees.h"
 #include "Consumption.h"
 #include "StrongWithEncapsulation.h"
 #include "StrongWithConstructor.h"
 #include "SafeArithmetic.h"
 #include "StringOperations.h"
+#include "cute.h"
+#include "ide_listener.h"
+#include "xml_listener.h"
+#include "cute_runner.h"
+#include <string>
+#include "BooleanTest.h"
+#include "BitOperationsTest.h"
+
 
 using namespace Pssst;
-struct Int: strong<int,Int>,ops<Int,Order,Inc,Add,Eq,Out>{
+struct Int: strong<int,Int>,ops<Int,Order,Inc,Add,Out>{
 };
 
 
-struct Size: strong<unsigned,Size>,ops<Size,Eq,Order,Inc,Add,Out> {
+struct Size: strong<unsigned,Size>,ops<Size,Order,Inc,Add,Out> {
 };
 static_assert(sizeof(Size)==sizeof(unsigned),"no overhead");
 
@@ -56,26 +47,26 @@ void testBoolConverts(){
 
 void testUPlus(){
 	uptest one{1};
-	ASSERT_EQUAL(one.val,(+one).val);
+	ASSERT_EQUAL(one.value,(+one).value);
 }
 void testUMinus(){
 	struct umtest:strong<int,umtest>,ops<umtest,UMinus>{};
 	umtest one{1};
-	ASSERT_EQUAL(-(one.val),(-one).val);
+	ASSERT_EQUAL(-(one.value),(-one).value);
 }
 void testUInc(){
 	struct uinctest:strong<int,uinctest>,ops<uinctest,Inc>{};
 	uinctest var{1};
-	ASSERT_EQUAL(2,(++var).val);
-	ASSERT_EQUAL(2,(var++).val);
-	ASSERT_EQUAL(3,var.val);
+	ASSERT_EQUAL(2,(++var).value);
+	ASSERT_EQUAL(2,(var++).value);
+	ASSERT_EQUAL(3,var.value);
 }
 void testUDec(){
 	struct udtest:strong<int,udtest>,ops<udtest,Dec>{};
 	udtest var{2};
-	ASSERT_EQUAL(1,(--var).val);
-	ASSERT_EQUAL(1,(var--).val);
-	ASSERT_EQUAL(0,var.val);
+	ASSERT_EQUAL(1,(--var).value);
+	ASSERT_EQUAL(1,(var--).value);
+	ASSERT_EQUAL(0,var.value);
 }
 
 
@@ -135,7 +126,7 @@ void testWaitCounter(){
 	ASSERT_EQUAL(WaitC{0},c);
 	ASSERT_EQUAL(one,++c);
 	ASSERT_EQUAL(one,c++);
-	ASSERT_EQUAL(2,c.val);
+	ASSERT_EQUAL(2,c.value);
 }
 
 
@@ -145,12 +136,12 @@ bool runAllTests(int argc, char const *argv[]) {
 	//TODO add your test here
 	s.push_back(CUTE(testWithStringBase));
 	s.push_back(CUTE(testSizeworks));
-//	s.push_back(CUTE(testRelativeOps::testWidthDConstructionEq));
-//	s.push_back(CUTE(testRelativeOps::testWidthDMultiplyWith));
-//	s.push_back(CUTE(testRelativeOps::testWidthDAddable));
-//	s.push_back(CUTE(testRelativeOps::testWidthDSubtractable));
-//	s.push_back(CUTE(testRelativeOps::testWidthDivides));
-//	s.push_back(CUTE(testRelativeOps::testDiffCtorEq));
+	//	s.push_back(CUTE(testRelativeOps::testWidthDConstructionEq));
+	//	s.push_back(CUTE(testRelativeOps::testWidthDMultiplyWith));
+	//	s.push_back(CUTE(testRelativeOps::testWidthDAddable));
+	//	s.push_back(CUTE(testRelativeOps::testWidthDSubtractable));
+	//	s.push_back(CUTE(testRelativeOps::testWidthDivides));
+	//	s.push_back(CUTE(testRelativeOps::testDiffCtorEq));
 	s.push_back(CUTE(testUPlus));
 	s.push_back(CUTE(testUMinus));
 	s.push_back(CUTE(testUInc));
@@ -159,22 +150,26 @@ bool runAllTests(int argc, char const *argv[]) {
 	s.push_back(CUTE(testWaitCounter));
 	cute::xml_file_opener xmlfile(argc, argv);
 	cute::xml_listener<cute::ide_listener<>> lis(xmlfile.out);
-	auto runner = cute::makeRunner(lis, argc, argv);
+	auto const runner = cute::makeRunner(lis, argc, argv);
 	bool success = runner(s, "AllTests");
-cute::suite ArraySizeDiffStrong = make_suite_ArraySizeDiffStrong();
-success &= runner(ArraySizeDiffStrong, "ArraySizeDiffStrong");
+	cute::suite BitOperationsTest = make_suite_BitOperationsTest();
+	success &= runner(BitOperationsTest, "BitOperationsTest");
+	cute::suite ArraySizeDiffStrong = make_suite_ArraySizeDiffStrong();
+	success = runner(ArraySizeDiffStrong, "ArraySizeDiffStrong") && success;
 	cute::suite Degrees = make_suite_Degrees();
-	success &= runner(Degrees, "Degrees");
+	success = runner(Degrees, "Degrees") && success;
 	cute::suite Consumption = make_suite_Consumption();
-	success &= runner(Consumption, "Consumption");
+	success = runner(Consumption, "Consumption") && success;
 	cute::suite StrongWithEncapsulation = make_suite_StrongWithEncapsulation();
-	success &= runner(StrongWithEncapsulation, "StrongWithEncapsulation");
+	success = runner(StrongWithEncapsulation, "StrongWithEncapsulation") && success;
 	cute::suite StrongWithConstructor = make_suite_StrongWithConstructor();
-	success &= runner(StrongWithConstructor, "make_suite_StrongWithConstructor");
+	success = runner(StrongWithConstructor, "make_suite_StrongWithConstructor") && success;
 	cute::suite SafeArithmetic = make_suite_SafeArithmetic();
-	success &= runner(SafeArithmetic, "SafeArithmetic");
+	success = runner(SafeArithmetic, "SafeArithmetic") && success;
 	cute::suite StringOperations = make_suite_StringOperations();
-	success &= runner(StringOperations, "StringOperations");
+	success = runner(StringOperations, "StringOperations") && success;
+	cute::suite BooleanTest = make_suite_BooleanTest();
+	success &= runner(BooleanTest, "BooleanTest");
 	return success;
 }
 

@@ -3,7 +3,9 @@
 #include "cute.h"
 
 using namespace Pssst;
-struct literGas:strong<double,literGas>{};
+struct literGas
+		: strong<double,literGas>
+		, ops<literGas,Additive,Order,Out>{};
 
 struct literPer100km
 		:strong<double,literPer100km>
@@ -19,7 +21,7 @@ static_assert(sizeof(double)==sizeof(kmDriven));
 
 
 literPer100km consumption(literGas l, kmDriven km) {
-	return {l.val/(km/100.0).val};
+	return {l.value/(km/100.0).value};
 }
 
 void testConsumption1over1(){
@@ -38,7 +40,7 @@ void testConsumption40over500(){
 
 
 
-struct liter : ops<liter,Abs,Additive,Eq,Order,Out>{
+struct liter : ops<liter,Additive,Order,Out>{
 	// needs ctor to avoid need for extra {}
 	constexpr explicit liter(double lit):l{lit}{};
 	double l{};

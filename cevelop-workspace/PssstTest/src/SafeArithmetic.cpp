@@ -17,9 +17,14 @@ void thisIsASafeArithmeticTest() {
 	static_assert(std::is_same_v<decltype(sz-1), safe_size_t>,"staying in the domain?");
 	ASSERT_THROWS(sz-1,std::exception);
 }
+void newTestFunction(){
+	ASSERTM("show more usages with strong types", false);
+}
+
 
 cute::suite make_suite_SafeArithmetic() {
 	cute::suite s { };
 	s.push_back(CUTE(thisIsASafeArithmeticTest));
+	s.push_back(CUTE(newTestFunction));
 	return s;
 }

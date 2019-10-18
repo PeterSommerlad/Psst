@@ -13,7 +13,7 @@ struct degrees:strong<double,degrees>,
 Affine<degrees,double>, ops<degrees,Out>{};
 
 struct Kelvin: create_vector_space_checked<Kelvin,degrees>
-,ops<Kelvin,Eq,Order,Out>{
+,ops<Kelvin,Order,Out>{
 	constexpr Kelvin(affine_space::value_type v): create_vector_space_checked<Kelvin,degrees>{v} {
 		if(v <0) throw std::logic_error{"can not have negative K temperature"};
 	}
