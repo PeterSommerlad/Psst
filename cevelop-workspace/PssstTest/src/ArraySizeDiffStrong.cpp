@@ -10,8 +10,7 @@
 
 namespace test {
 using namespace Pssst;
-struct Size: strong<size_t,Size>,ops<Size,Order,Additive,Out> {
-};
+struct Size: strong<size_t,Size>,ops<Size,Order,Additive,Out> {};
 struct Diff: strong<std::ptrdiff_t,Diff>,ops<Diff,Order,Additive,Out>{};
 
 template <typename T, size_t N>
@@ -28,16 +27,16 @@ struct array{
 	using const_iterator=const_pointer;
 	using reverse_iterator=std::reverse_iterator<iterator>;
 	using const_reverse_iterator=std::reverse_iterator<const_iterator>;
-	constexpr pointer data() { return a;}
-	constexpr const_pointer data() const { return a;}
+	constexpr pointer data() noexcept { return a;}
+	constexpr const_pointer data() const noexcept { return a;}
 	constexpr reference at( size_type pos ) { if (pos < size()) return a[pos]; throw std::out_of_range{"array::at"};}
 	constexpr const_reference at( size_type pos ) const { if (pos < size()) return a[pos]; throw std::out_of_range{"array::at"};}
-	constexpr reference operator[]( size_type pos ) { return a[pos];}
-	constexpr const_reference operator[]( size_type pos ) const { return a[pos]; }
-	constexpr reference front() { return *a;}
-	constexpr const_reference front() const{ return *a;}
-	constexpr reference back() { return a[N-1];}
-	constexpr const_reference back() const{ return a[N-1];}
+	constexpr reference operator[]( size_type pos ) noexcept { return a[pos];}
+	constexpr const_reference operator[]( size_type pos ) const noexcept { return a[pos]; }
+	constexpr reference front() noexcept { return *a;}
+	constexpr const_reference front() const noexcept { return *a;}
+	constexpr reference back() noexcept { return a[N-1];}
+	constexpr const_reference back() const noexcept { return a[N-1];}
 	constexpr iterator begin() noexcept{return a;}
 	constexpr const_iterator begin() const noexcept {return a;}
 	constexpr const_iterator cbegin() const noexcept {return a;}
@@ -61,6 +60,11 @@ array(T, U...) -> array<T, 1 + sizeof...(U)>;
 
 
 }
+
+
+// TODO: should put Size as vector space and Diff as its affine spaces
+// this will provide at least the correct typing for substraction
+// but current schema will have Size having the same range as Diff
 cute::suite make_suite_ArraySizeDiffStrong() {
 	cute::suite s { };
 	return s;

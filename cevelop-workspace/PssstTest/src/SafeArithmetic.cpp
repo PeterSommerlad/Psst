@@ -5,6 +5,8 @@
 #include <boost/safe_numerics/exception_policies.hpp>
 #include <boost/safe_numerics/automatic.hpp>
 
+// TODO more tests beyond principle
+
 // safe numerics do not save us from the wrong operations... try differently first.
 // but we can detect overflowing operations
 

@@ -5,9 +5,7 @@
 
 
 #include <cmath>
-#include <cstdlib> // for abs(int)
 #include <type_traits>
-//#include <iosfwd> // <ostream> not really needed IMHO, because template definition only.
 #include <utility>
 #include <stdexcept>
 
@@ -47,15 +45,78 @@ typename U::value_type
 template<typename U>
 constexpr inline bool is_strong_v = is_strong_t<U>::value;
 
+}
 //should not depend on strong wrapper but also allow class types with single member variable
-template <typename T,  std::enable_if_t<std::is_class_v<T>,int> = 0>
+namespace detail__{
+template <typename T,  std::enable_if_t<std::is_class_v<std::remove_reference_t<T>>,int> = 0>
 constexpr auto membertype(T x) { // not meant to be evaluated, assumes is_class_v<T>
 	auto [y]=x;
 	return y;
 }
-template <typename T>
-using underlying_value_type = decltype(detail::membertype(std::declval<T>()));
+template <typename T,  std::enable_if_t<not std::is_class_v<std::remove_reference_t<T>>,int> = 0>
+constexpr std::remove_reference_t<T> membertype(T x) {
+	return x;
+}
 
+}
+template <typename T>
+using underlying_value_type = decltype(detail__::membertype(std::declval<T>()));
+
+// only supports data member in first or last class in hierarchy, not in-between.
+// the latter is much too tricky to detect.
+// only ever true for aggregates with a single member and empty bases
+
+template <typename T, typename= std::void_t<>>
+struct needsbaseinit:std::false_type{};
+
+template <typename T>
+struct needsbaseinit<T,
+	std::void_t<decltype(T{{},std::declval<underlying_value_type<T>>()})>
+>:std::is_aggregate<T>{};
+
+template <typename T, typename S = underlying_value_type<T>>
+constexpr auto retval(S && x) noexcept {
+	if constexpr (needsbaseinit<T>{})
+		return T{{},std::move(x)}; // value in most derived
+	else
+		return T{std::move(x)}; // value in base
+}
+
+namespace testing__ {
+static_assert(!needsbaseinit<int>{},"needsbasinit for built-in");
+
+struct Y {};
+struct X:Y{int v;};
+static_assert(needsbaseinit<X>{},"needsbasinit with empty class false");
+
+} // testing__
+
+
+
+// access single value, regardless of its name, read only!
+template<typename T>
+struct Value {
+	friend constexpr
+	auto const &
+	value(T const &x) noexcept {
+		auto const & [y]=x;
+		return y;
+	}
+	friend constexpr
+	auto &
+	value_ref(T &x) noexcept {
+		auto & [y]=x;
+		return y;
+	}
+	friend constexpr
+	auto &&
+	value_consume(T &&x) noexcept {
+		auto && [y]=x;
+		return std::move(y);
+	}
+};
+
+namespace detail{
 // meta-binders for first or second template argument
 // only bind2 is used here
 template<typename B, template<typename...>class T>
@@ -74,7 +135,10 @@ struct bind1{
 template <typename T>
 struct default_zero{
 	constexpr T operator()() const{
-		return T{detail::underlying_value_type<T>{}};
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+		return retval<T>({});
+#pragma GCC diagnostic pop
 	}
 };
 
@@ -91,7 +155,7 @@ struct Eq{
 	operator==(U const &l, U const& r) noexcept {
 		auto const &[vl]=l;
 		auto const &[vr]=r;
-		return Bool{vl == vr};
+		return retval<Bool>(vl == vr);
 	}
 	friend constexpr Bool
 	operator!=(U const &l, U const& r) noexcept {
@@ -105,7 +169,7 @@ struct Order: Eq<U,Bool> {
 	operator<(U const &l, U const& r) noexcept {
 		auto const &[vl]=l;
 		auto const &[vr]=r;
-		return Bool{vl < vr};
+		return retval<Bool>(vl < vr);
 	}
 	friend constexpr Bool
 	operator>(U const &l, U const& r) noexcept {
@@ -128,7 +192,7 @@ struct UPlus{
 	friend constexpr U
 	operator+(U const &r){
 		auto const &[v]=r;
-		return U{+v};
+		return retval<U>(+v);
 	}
 };
 template <typename U>
@@ -136,7 +200,7 @@ struct UMinus{
 	friend constexpr U
 	operator-(U const &r){
 		auto const &[v]=r;
-		return U{-v};
+		return retval<U>(-v);
 	}
 };
 
@@ -216,7 +280,8 @@ struct BitOps {
 		auto const &[v]=r;
 		static_assert(std::is_unsigned_v<std::remove_reference_t<decltype(v)>>,
 				"bitops should only be enabled for unsigned types");
-		return R{static_cast<std::remove_reference_t<decltype(v)>>(~v)};
+		return retval<R>({static_cast<std::remove_reference_t<decltype(v)>>(~v)});
+		//return R{static_cast<std::remove_reference_t<decltype(v)>>(~v)};
 	}
 };
 
@@ -265,8 +330,10 @@ struct ShiftOps{
 	operator>>(R l, B r)  {
 		return l>>=r;
 	}
-
 };
+
+template <typename R>
+using ShiftOpsSym = ShiftOps<R,R>;
 
 /// arithmetic
 
@@ -305,7 +372,7 @@ struct Sub {
 		fun(U const &r){\
 			auto const &[v]=r;\
 			using std::fun;\
-			return U{fun(v)}; \
+			return retval<U>(fun(v)); \
 		}
 
 
@@ -415,11 +482,11 @@ struct ScalarMultImpl : ScalarModulo<R,BASE,std::is_integral_v<BASE>> {
 	}
 	friend constexpr R
 	operator*(R l, BASE const &r) noexcept {
-		return l*=r;
+		return l *= r;
 	}
 	friend constexpr R
 	operator*(BASE const & l, R r) noexcept {
-		return r*=l;
+		return r *= l;
 	}
 	friend constexpr R&
 	operator/=(R& l, BASE const &r) noexcept {
@@ -430,7 +497,7 @@ struct ScalarMultImpl : ScalarModulo<R,BASE,std::is_integral_v<BASE>> {
 	}
 	friend constexpr R
 	operator/(R l, BASE const &r) noexcept {
-		return l/=r;
+		return l /= r;
 	}
 };
 
@@ -457,11 +524,11 @@ struct AbsRelArithmetic{
 	}
 	friend constexpr VS
 	operator+(VS l, AS const &r) noexcept {
-		return l+=r;
+		return l += r;
 	}
 	friend constexpr VS
 	operator+(AS const & l, VS r) noexcept {
-		return r+=l; // assume commutativity of +
+		return r += l; // assume commutativity of +
 	}
 	friend constexpr VS&
 	operator-=(VS& l, AS const &r) noexcept {
@@ -478,7 +545,7 @@ struct AbsRelArithmetic{
 	operator+(VS  const &l, VS const &r) noexcept {
 		auto const &[vl]=l;
 		auto const &[vr] = r;
-		return AS{vl-vr};
+		return retval<AS>(vl-vr);
 	}
 };
 
@@ -490,7 +557,10 @@ struct create_vector_space {
 	using affine_space=AFFINE;
 	using vector_space=ME;
 	static_assert(std::is_same_v<affine_space,decltype(ZEROFUNC{}())>, "origin must be in domain affine");
-	static inline constexpr affine_space origin=ZEROFUNC{}();
+	static inline constexpr affine_space origin{ZEROFUNC{}()};
+//	create_vector_space()=default;
+//	create_vector_space(affine_space v):value{v}{}
+//	create_vector_space(typename affine_space::value_type v):value{{v}}{}
 	affine_space value{};
 	// linear
 	// vs + as
@@ -574,14 +644,18 @@ constexpr TO convertTo(FROM from) noexcept{
 	static_assert(std::is_same_v<
 			typename FROM::affine_space
 			,typename TO::affine_space>);
-	return {(from.value-(TO::origin-FROM::origin))};
+	return retval<TO>((from.value-(TO::origin-FROM::origin)));
 }
 
 
 
 namespace ___testing___{
-using detail::is_strong_v;
-using detail::underlying_value_type;
+// cheat
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-braces"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+using ::Pssst::detail::is_strong_v;
+using ::Pssst::underlying_value_type;
 
 template <typename U>
 struct is_absolute{
@@ -601,12 +675,13 @@ static_assert(!is_absolute_v<int>,"int is no absolute unit");
 
 
 
-struct bla:strong<int,bla>,ops<bla,Eq>{};
+struct bla:strong<int,bla>,Eq<bla>{};
 static_assert(is_strong_v<bla>,"bla is a unit");
 static_assert(!is_absolute_v<bla>,"bla is absolute?");
+static_assert(0 == bla{0}.value, "check for subobject warning");
 struct blu:create_vector_space<blu,bla>{};
 static_assert(is_absolute_v<blu>,"blu should be absolute");
-static_assert(blu::origin==blu::affine_space{0},"blu origin is zero");
+static_assert(blu::origin==typename blu::affine_space{0},"blu origin is zero");
 static_assert(blu{42}.value==bla{42}, "rel accessible");
 static_assert(std::is_same_v<int,underlying_value_type<bla>>,"..");
 
@@ -641,6 +716,7 @@ struct dummy_d:ops<dummy,Sub,Add> {
 };
 static_assert(sizeof(double)==sizeof(dummy_d),"dummy_d should be same size as double");
 }
+#pragma GCC diagnostic pop
 
 #undef pssst_assert // do not leak macro
 

@@ -2,43 +2,83 @@
 #include "cute.h"
 #include "pssst.h"
 
-
+//#define USE_STRONG
 using namespace Pssst;
 // affine space: degrees (K and C)
-struct degrees:strong<double,degrees>,
-Affine<degrees,double>, ops<degrees,Out>{};
+struct degrees:
+#ifdef USE_STRONG
+		strong<double,degrees>,
+#endif
+		Affine<degrees,double>, ops<degrees,Out>{
+#ifndef USE_STRONG
+			explicit constexpr
+			degrees(double val) noexcept
+			:value{val}{}
+			constexpr degrees() noexcept = default;
+			double value{};
+#endif
+
+		};
 
 static_assert(sizeof(double)==sizeof(degrees));
 
 
 struct Kelvin:create_vector_space<Kelvin,degrees>
-             ,ops<Kelvin,Order,Out>{};
+             ,ops<Kelvin,Order,Out>{
+#ifndef USE_STRONG
+	using base = create_vector_space<Kelvin,degrees>;
+	explicit constexpr
+				Kelvin(degrees val) noexcept
+				:base{val}{}
+				explicit constexpr
+							Kelvin(double val) noexcept
+							:base{degrees{val}}{}
+			constexpr Kelvin() noexcept = default;
+
+#endif
+
+};
 
 static_assert(sizeof(double)==sizeof(Kelvin));
 
 struct CelsiusZero{
 	constexpr degrees operator()() const noexcept{
-		return {273.15};
+		return retval<degrees>(273.15);
 	}
 };
 
 struct Celsius:create_vector_space<Celsius,degrees,CelsiusZero>
-              , ops<Celsius,Order,Out>{};
+              , ops<Celsius,Order,Out>{
+	#ifndef USE_STRONG
+	using base=create_vector_space<Celsius,degrees,CelsiusZero>;
+
+	explicit constexpr
+				Celsius(degrees val) noexcept
+				:base{val}{}
+				explicit constexpr
+							Celsius(double val) noexcept
+							:base{degrees{val}}{}
+			constexpr Celsius() noexcept = default;
+
+#endif
+
+
+};
 static_assert(sizeof(degrees)==sizeof(Celsius));
 
-constexpr Celsius fromKelvin(Kelvin k)noexcept{
-	return {(k.value-(Celsius::origin - Kelvin::origin)).value};
+constexpr Celsius fromKelvin(Kelvin k) noexcept {
+	return Celsius{k.value-(Celsius::origin - Kelvin::origin)};
 }
 
 constexpr Kelvin fromCelsius(Celsius c)noexcept{
-	return {(c.value-(Kelvin::origin-Celsius::origin)).value};
+	return Kelvin{c.value-(Kelvin::origin-Celsius::origin)};
 }
 
 struct otherdegrees:ops<otherdegrees,Order,Out>{
 	double d;
 };
 
-degrees x{{5},{},{}};
+degrees x{5};
 
 void thisIsADegreesTest() {
 	degrees hotter{20};

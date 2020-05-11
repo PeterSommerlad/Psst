@@ -2,6 +2,7 @@
 #include "ArraySizeDiffStrong.h"
 #include "Degrees.h"
 #include "Consumption.h"
+#include "ConsumptionWithoutStrong.h"
 #include "StrongWithEncapsulation.h"
 #include "StrongWithConstructor.h"
 #include "SafeArithmetic.h"
@@ -10,16 +11,21 @@
 #include "ide_listener.h"
 #include "xml_listener.h"
 #include "cute_runner.h"
-#include <string>
 #include "BooleanTest.h"
 #include "BitOperationsTest.h"
+#include <string>
 
 
 using namespace Pssst;
-struct Int: strong<int,Int>,ops<Int,Order,Inc,Add,Out>{
+struct Int: strong<int,Int>,ops<Int,Value,Order,Inc,Add,Out>{
 };
 
+namespace {
+Int  dummy{42};
 
+int &y = value_ref(dummy);
+
+}
 struct Size: strong<unsigned,Size>,ops<Size,Order,Inc,Add,Out> {
 };
 static_assert(sizeof(Size)==sizeof(unsigned),"no overhead");
@@ -69,11 +75,22 @@ void testUDec(){
 	ASSERT_EQUAL(0,var.value);
 }
 
+struct S:strong<std::string,S>,ops<S,Value,Out,Eq>{};
 
 void testWithStringBase(){
-	struct S:strong<std::string,S>,ops<S,Out,Eq>{};
 	S s{"hello"};
 	ASSERT_EQUAL(S{"hello"},s);
+}
+
+void testMoveWithStringBase(){
+	S s{std::string(1000u,'a')}; // assume beyond SSO
+	char const *data = value(s).data();
+	ASSERT_EQUAL(1000ul,value(s).size());
+	ASSERT_LESS_EQUAL(1000ul,value(s).capacity());
+	std::string other{value_consume(std::move(s))};
+	ASSERT_EQUAL(1000ul,other.size());
+	ASSERT_EQUAL(0ul,value_ref(s).size());
+	ASSERT_EQUAL(intptr_t(data),intptr_t(other.data()));
 }
 //namespace testRelativeOps{
 //struct WidthD : Relative<WidthD,double>{};
@@ -148,6 +165,7 @@ bool runAllTests(int argc, char const *argv[]) {
 	s.push_back(CUTE(testUDec));
 	s.push_back(CUTE(testBoolConverts));
 	s.push_back(CUTE(testWaitCounter));
+	s.push_back(CUTE(testMoveWithStringBase));
 	cute::xml_file_opener xmlfile(argc, argv);
 	cute::xml_listener<cute::ide_listener<>> lis(xmlfile.out);
 	auto const runner = cute::makeRunner(lis, argc, argv);
@@ -160,6 +178,8 @@ bool runAllTests(int argc, char const *argv[]) {
 	success = runner(Degrees, "Degrees") && success;
 	cute::suite Consumption = make_suite_Consumption();
 	success = runner(Consumption, "Consumption") && success;
+	cute::suite ConsumptionWithoutStrong = make_suite_ConsumptionWithoutStrong();
+	success = runner(ConsumptionWithoutStrong, "ConsumptionWithoutStrong") && success;
 	cute::suite StrongWithEncapsulation = make_suite_StrongWithEncapsulation();
 	success = runner(StrongWithEncapsulation, "StrongWithEncapsulation") && success;
 	cute::suite StrongWithConstructor = make_suite_StrongWithConstructor();
